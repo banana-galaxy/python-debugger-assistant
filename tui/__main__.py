@@ -4,20 +4,26 @@ from tui import DebuggerScreen
 
 def main(screen: curses.window):
 
+	curses.cbreak()
+
 	debugger = DebuggerScreen(
 		screen,
 		{
-			"reload": print,
-			"exit": print,
-			"function": input,
-			"abc": bool,
-			"lkjdsd": int,
-			"dorime": str, # Commands that can be used
-		}
+			"reload": lambda a: a.addstr(6, 10, "reload was pressed"),
+			"exit": lambda a: a.addstr(8, 10, "exit was pressed"),
+			"function": lambda a: a.addstr(10, 10, "function was pressed"),
+			"abc": lambda a: a.addstr(12, 10, "abc was pressed"),
+		},
+		10
 	)
 
-	curses.napms(5000)
+	debugger.listen()
 
 
 if __name__ == "__main__":
-	wrapper(main)
+	try:
+		wrapper(main)
+	except KeyboardInterrupt:
+		pass
+	except Exception as e:
+		raise e
