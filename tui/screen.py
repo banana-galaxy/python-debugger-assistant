@@ -19,11 +19,17 @@ class DebuggerScreen:
 
         self.current_command_index = 0  # First command is selected
 
-        self.commands_window = curses.newwin(curses.LINES, curses.COLS // 2, 0, 0)
-
+        self.commands_window = curses.newwin(
+            curses.LINES,
+            curses.COLS // 2,
+            0,
+            0
+        )
         self.output_window = curses.newwin(
             curses.LINES, curses.COLS - (curses.COLS // 2), 0, curses.COLS // 2
         )
+
+        self.init_colors()
 
         # Draw borders for screen and windows
         self.screen.border()
@@ -43,6 +49,23 @@ class DebuggerScreen:
         self.commands_window.refresh()
         self.output_window.refresh()
 
+
+    def init_colors(self):
+        # Default colors
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        # Scheme for commands window
+        curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        # Scheme for output window content
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        # Scheme for titles
+        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        # Scheme for python logo
+        curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+
+        self.commands_window.bkgdset(" ", curses.color_pair(2))
+        self.output_window.bkgdset(" ", curses.color_pair(2))
+
+
     def draw_commands_window(self):
         """Initialise commands window with title and command lists"""
 
@@ -53,9 +76,14 @@ class DebuggerScreen:
         title = padding + title + padding
 
         # Draw the title
-        self.commands_window.addstr(1, 1, new_line)
-        self.commands_window.addstr(2, 1, title, curses.A_BOLD)
-        self.commands_window.addstr(3, 1, new_line)
+        self.commands_window.addstr(1, 1, new_line, curses.color_pair(4))
+        self.commands_window.addstr(
+            2,
+            1,
+            title,
+            curses.A_BOLD | curses.color_pair(4)
+        )
+        self.commands_window.addstr(3, 1, new_line, curses.color_pair(4))
 
         # Draw each command, with spaces to fill up empty space
         for num, cmd in enumerate(self.commands.keys()):
@@ -64,6 +92,7 @@ class DebuggerScreen:
                 3,
                 "> " + cmd + " " * (curses.COLS // 2 - len("> " + cmd) - 4),
             )
+
 
     def draw_output_window(self):
         """Initialise output window with title and logo"""
@@ -78,6 +107,7 @@ class DebuggerScreen:
             self.output_window.border()
             self.init_output_window()
 
+
     def init_output_window(self):
         """Initialise output window with title"""
 
@@ -87,19 +117,31 @@ class DebuggerScreen:
 
         title = padding + title + padding
 
-        self.output_window.addstr(1, 1, line)
-        self.output_window.addstr(2, 1, title, curses.A_BOLD)
-        self.output_window.addstr(3, 1, line)
+        self.output_window.addstr(1, 1, line, curses.color_pair(4))
+        self.output_window.addstr(
+            2,
+            1,
+            title,
+            curses.A_BOLD | curses.color_pair(4)
+        )
+        self.output_window.addstr(3, 1, line, curses.color_pair(4))
+
 
     def draw_output_window_logo(self):
         """Draw logo in output window"""
 
-        y_pad = curses.LINES // 2 - len(self.logo.split("\n")) // 2 + 4 // 2
+        y_pad = curses.LINES // 2 - len(self.logo.split("\n")) // 2 + 1
 
         for ln, text in enumerate(self.logo.split("\n")):
             padding = (curses.COLS // 4 - len(text) // 2 - 1) * " "
 
-            self.output_window.addstr(y_pad + ln, 1, padding + text + padding)
+            self.output_window.addstr(
+                y_pad + ln,
+                1,
+                padding + text + padding,
+                curses.color_pair(5)
+            )
+
 
     def select_command(self, pos: int):
         line = 2 * pos + 6
@@ -108,8 +150,12 @@ class DebuggerScreen:
 
         # Highlight the currently selected command
         self.commands_window.chgat(
-            line, 3, curses.COLS // 2 - 6, curses.A_STANDOUT | curses.A_ITALIC
+            line,
+            3,
+            curses.COLS // 2 - 6,
+            curses.A_STANDOUT | curses.A_ITALIC | curses.color_pair(1)
         )
+
 
     def handle_command(self):
 
@@ -121,6 +167,7 @@ class DebuggerScreen:
         cmds = list(self.commands.keys())
         handler = self.commands[cmds[self.current_command_index]]
         handler(self.output_window)
+
 
     def listen(self):
         """Start listening for inputs"""
