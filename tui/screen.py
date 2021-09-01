@@ -133,13 +133,26 @@ class DebuggerScreen:
         y_pad = curses.LINES // 2 - len(self.logo.split("\n")) // 2 + 1
 
         for ln, text in enumerate(self.logo.split("\n")):
+            text = text.strip()
             padding = (curses.COLS // 4 - len(text) // 2 - 1) * " "
+
+            t1, t2 = text.split("|")
+
+            # Python logo has 2 colors - yellow on top left,
+            # and blue on bottom right
+            # so `|` is used to separate these two groups in the logo
 
             self.output_window.addstr(
                 y_pad + ln,
                 1,
-                padding + text + padding,
+                padding + t1,
                 curses.color_pair(5)
+            )
+            self.output_window.addstr(
+                y_pad + ln,
+                1 + len(t1) + len(padding),
+                t2 + padding,
+                curses.color_pair(4)
             )
 
 
