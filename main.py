@@ -1,5 +1,6 @@
 import sys, importlib, re
-file = sys.argv[1].split('.')[0]
+
+file = sys.argv[1].split(".")[0]
 module = importlib.import_module(file)
 done = False
 
@@ -17,7 +18,7 @@ while not done:
         if "(" not in user:
             print("Please call a function the same way you would in python\n")
             continue
-        method, args = user.split('(')
+        method, args = user.split("(")
         args = re.findall("\w+", args)
         try:
             func = getattr(module, method)
