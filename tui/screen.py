@@ -8,13 +8,15 @@ class DebuggerScreen():
 		self,
 		scrn: curses.window,
 		commands: Dict[str, Callable],
-		masterkey: int
+		masterkey: int,
+		logo: str
 	):
 		"""Initialise screen and windows"""
 
 		self.screen = scrn
 		self.commands = commands
 		self.masterkey = masterkey
+		self.logo = logo
 
 		self.current_command_index = 0 # First command is selected
 
@@ -83,7 +85,14 @@ class DebuggerScreen():
 				"> " + cmd + " " * (curses.COLS // 2 - len("> " + cmd) - 4),
 			)
 
+
 	def draw_output_window(self):
+		"""Initialise output window with title and logo"""
+		self.init_output_window()
+		self.draw_output_window_logo()
+
+
+	def init_output_window(self):
 		"""Initialise output window with title"""
 
 		title = "OUTPUT"
@@ -110,6 +119,27 @@ class DebuggerScreen():
 		)
 
 
+	def draw_output_window_logo(self):
+		"""Draw logo in output window"""
+
+		y_pad = curses.LINES // 2 - len(self.logo.split("\n")) // 2 + 4 // 2
+
+		for ln, text in enumerate(self.logo.split("\n")):
+
+			#text = text.strip()
+
+			padding = (curses.COLS // 4 - len(text) // 2 - 1) * " "
+
+			with open("h.txt", "w") as f:
+				f.write(str(y_pad))
+
+			self.output_window.addstr(
+				y_pad + ln,
+				1,
+				padding + text + padding
+			)
+
+
 	def select_command(self, pos: int):
 		line_no = 2 * pos + 6
 
@@ -125,6 +155,11 @@ class DebuggerScreen():
 
 
 	def handle_command(self):
+
+		self.output_window.clear()
+		self.output_window.border()
+		self.init_output_window()
+
 		cmds = list(self.commands.keys())
 		handler = self.commands[cmds[self.current_command_index]]
 		handler(self.output_window)

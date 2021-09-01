@@ -1,6 +1,6 @@
 import curses
 from curses import wrapper
-from tui import DebuggerScreen
+from tui import DebuggerScreen, logo
 
 def main(screen: curses.window):
 
@@ -14,7 +14,8 @@ def main(screen: curses.window):
 			"function": lambda a: a.addstr(10, 10, "function was pressed"),
 			"abc": lambda a: a.addstr(12, 10, "abc was pressed"),
 		},
-		10
+		10, # ascii code for enter key => will be used to select commands
+		logo
 	)
 
 	debugger.listen()
