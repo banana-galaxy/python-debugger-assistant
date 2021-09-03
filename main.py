@@ -1,29 +1,26 @@
-import sys, importlib, re
+import importlib
 
-file = sys.argv[1].split(".")[0]
-module = importlib.import_module(file)
-done = False
 
-while not done:
-    user = input()
-    if user == "exit":
-        done = True
-    elif user == "reload":
-        try:
-            importlib.reload(module)
-        except BaseException as e:
-            print(f"unable to reload module: {e}")
-        print()
-    else:
-        if "(" not in user:
-            print("Please call a function the same way you would in python\n")
-            continue
-        method, args = user.split("(")
-        args = re.findall("\w+", args)
-        try:
-            func = getattr(module, method)
-            return_value = func(*args)
-            print(f"function return value: {return_value} | type: {type(return_value)}")
-        except BaseException as e:
-            print(e)
-        print()
+def load(file_name):
+    try:
+        module = importlib.import_module(file_name.split(".")[0])
+        return f"module loaded", module, [i for i in dir(module) if "__" not in i]
+    except BaseException as e:
+        return f"failed to load module: {e}", 0
+
+
+def reload(module):
+    try:
+        importlib.reload(module)
+        return "module reloaded", [i for i in dir(module) if "__" not in i]
+    except BaseException as e:
+        return f"failed to reload module: {e}", 0
+
+
+def exit():
+    pass
+    # this may or may not need code depending on how the tui will work
+
+
+if "__main__" == __name__:
+    print(load("tes"))
