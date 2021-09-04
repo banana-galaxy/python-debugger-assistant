@@ -39,15 +39,21 @@ def main(win: curses.window):
     debugger = Debugger()
     debugger.load()
 
+    commands = {
+        "load": debugger.load,
+        "reload": debugger.reload,
+        "exit": exit,
+    }
+    new_cmds = [i for i in dir(debugger.module) if "__" not in i]
+    for i in new_cmds:
+        commands[i] = getattr(debugger.module, i)
+
     screen = DebuggerScreen(
         win,
-        {
-            "load": debugger.load,
-            "reload": debugger.reload,
-            "exit": exit,
-        },
+        commands,
         10,  # ascii code for enter key => will be used to select commands
         logo,
+        debugger,
     )
 
     screen.listen()
