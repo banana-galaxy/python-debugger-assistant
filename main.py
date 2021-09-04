@@ -53,7 +53,7 @@ def main(win: curses.window):
         commands,
         10,  # ascii code for enter key => will be used to select commands
         logo,
-        debugger.module,
+        debugger,
     )
 
     screen.listen()
