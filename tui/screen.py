@@ -1,5 +1,6 @@
 import curses
 from typing import Callable, Dict
+from copy import deepcopy
 
 
 class DebuggerScreen:
@@ -9,6 +10,7 @@ class DebuggerScreen:
         commands: Dict[str, Callable],
         masterkey: int,
         logo: str,
+        lib,
     ):
         """Initialise screen and windows"""
 
@@ -16,6 +18,7 @@ class DebuggerScreen:
         self.commands = commands
         self.masterkey = masterkey
         self.logo = logo
+        self.lib = lib
 
         self.current_command_index = 0  # First command is selected
 
@@ -169,6 +172,25 @@ class DebuggerScreen:
         for pos, line in enumerate(result.split("\n")):
             self.output_window.addstr(pos + 6, 3, ["", "Error - "][error] + line, color)
 
+    def update_cmds(self):
+        """Update available commands"""
+
+        # clean up current displayed command list
+        current_cmds = deepcopy(list(self.commands.keys()))
+        for i in current_cmds:
+            if i not in ["load", "reload", "exit"]:
+                self.commands.pop(i)
+        self.commands_window.addstr(11, 2, str(list(self.commands.keys())), curses.color_pair(3))
+        
+        # add updated commands
+        new_cmds = [i for i in dir(self.lib) if "__" not in i]
+        for i in new_cmds:
+            self.commands[i] = getattr(self.lib, i)
+        self.commands_window.addstr(13, 2, str(list(self.commands.keys())), curses.color_pair(3))
+
+        # update window
+        self.select_command(self.current_command_index)
+
     def listen(self):
         """Start listening for inputs"""
 
@@ -177,6 +199,8 @@ class DebuggerScreen:
 
             if char == self.masterkey:
                 self.handle_command()
+                if list(self.commands.keys())[self.current_command_index] == "reload":
+                    self.update_cmds()
 
             elif char == curses.KEY_DOWN:
                 if self.current_command_index < len(self.commands) - 1:
