@@ -2,6 +2,8 @@ import sys
 import importlib
 import curses
 from curses import wrapper
+from pprint import pformat
+
 from tui import DebuggerScreen, logo
 
 
@@ -27,6 +29,20 @@ class Debugger:
         except BaseException as e:
             return f"Failed to reload module: {e}", 1
 
+    def handler_func(self, func):
+        """Wraps around functions in the module, to format output, and catch errors"""
+
+        def wrapper():
+            try:
+                with open("debug.txt", "w") as f:
+                    f.write(str(curses.COLS // 2 - 10))
+                result = pformat(func(), width=curses.COLS // 3, compact=True)
+                return "Result - " + result, 0
+            except Exception as e:
+                return e, 1
+
+        return wrapper
+
 
 def main(win: curses.window):
 
@@ -37,21 +53,24 @@ def main(win: curses.window):
     curses.cbreak()
 
     debugger = Debugger()
-    debugger.load()
+    #    debugger.load()
 
     commands = {
-        "load": debugger.load,
-        "reload": debugger.reload,
-        "exit": exit,
+        "Load Module": debugger.load,
+        "Reload Module": debugger.reload,
     }
+
     new_cmds = [i for i in dir(debugger.module) if "__" not in i]
     for i in new_cmds:
-        commands[i] = getattr(debugger.module, i)
+        commands["Run Function " + i + "()"] = debugger.handler_func(
+            getattr(debugger.module, i)
+        )
+
+    commands["Exit Debugger"] = exit
 
     screen = DebuggerScreen(
         win,
         commands,
-        10,  # ascii code for enter key => will be used to select commands
         logo,
         debugger,
     )

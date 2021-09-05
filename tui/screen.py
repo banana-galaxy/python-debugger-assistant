@@ -9,18 +9,15 @@ class DebuggerScreen:
         self,
         scrn: curses.window,
         commands: Dict[str, Callable],
-        masterkey: int,
         logo: str,
-        debug,
+        debugger,
     ):
         """Initialise screen and windows"""
 
         self.screen = scrn
         self.commands = commands
-        self.masterkey = masterkey
         self.logo = logo
-        self.lib = debug.module
-        self.file = f"{debug.file_name}.py"
+        self.debugger = debugger
 
         self.current_command_index = 0  # First command is selected
 
@@ -161,10 +158,7 @@ class DebuggerScreen:
         cmd = cmds[self.current_command_index]
         handler = self.commands[cmd]
 
-        try:
-            result = handler()
-        except Exception as e:
-            result = (e.__repr__(), 1)
+        result = handler()
 
         error = result[1] != 0  # Check if an error ocurred while running the command.
         result = result[0]
@@ -175,10 +169,8 @@ class DebuggerScreen:
             self.output_window.addstr(pos + 6, 3, ["", "Error - "][error] + line, color)
 
     def get_current_cmds(self):
-        with open(self.file) as f:
-            readin = f.read()
-        commands = re.findall("def \w+\(.*\):", readin)
-        return [i.split('def ')[1].split('(')[0] for i in commands]
+        self.debugger.reload()
+        return [i for i in dir(self.debugger.module) if "__" not in i]
 
     def update_cmds(self):
         """Update available commands"""
@@ -186,15 +178,22 @@ class DebuggerScreen:
         # clean up current displayed command list
         current_cmds = deepcopy(list(self.commands.keys()))
         for i in current_cmds:
-            if i not in ["load", "reload", "exit"]:
+            if i not in ["Load Module", "Reload Module", "Exit Debugger"]:
                 self.commands.pop(i)
-        
+
         # add updated commands
         for i in self.get_current_cmds():
-            self.commands[i] = getattr(self.lib, i)
+            self.commands["Run Function " + i + "()"] = self.debugger.handler_func(
+                getattr(self.debugger.module, i)
+            )
 
-        # update window
+        # Redraw window
+        self.commands_window.refresh()
+        self.commands_window.border()
+        self.draw_commands_window()
         self.select_command(self.current_command_index)
+
+        self.commands_window.refresh()
 
     def listen(self):
         """Start listening for inputs"""
@@ -202,9 +201,12 @@ class DebuggerScreen:
         while True:
             char = self.screen.getch()
 
-            if char == self.masterkey:
+            if char == 10:
                 self.handle_command()
-                if list(self.commands.keys())[self.current_command_index] == "reload":
+                if list(self.commands.keys())[self.current_command_index] in [
+                    "Reload Module",
+                    "Load Module",
+                ]:
                     self.update_cmds()
 
             elif char == curses.KEY_DOWN:
