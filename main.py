@@ -1,6 +1,7 @@
 import sys
 import importlib
 import curses
+import re
 from curses import wrapper
 from tui import DebuggerScreen, logo
 
@@ -27,6 +28,12 @@ class Debugger:
         except BaseException as e:
             return f"Failed to reload module: {e}", 1
 
+    def get_functions(self):
+        with open(f"{self.file_name}.py") as f:
+            readin = f.read()
+        commands = re.findall("def \w+\(.*\):", readin)
+        return [i.split('def ')[1].split('(')[0] for i in commands]
+
 
 def main(win: curses.window):
 
@@ -44,8 +51,7 @@ def main(win: curses.window):
         "reload": debugger.reload,
         "exit": exit,
     }
-    new_cmds = [i for i in dir(debugger.module) if "__" not in i]
-    for i in new_cmds:
+    for i in debugger.get_functions():
         commands[i] = getattr(debugger.module, i)
 
     screen = DebuggerScreen(

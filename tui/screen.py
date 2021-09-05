@@ -21,6 +21,7 @@ class DebuggerScreen:
         self.logo = logo
         self.lib = debug.module
         self.file = f"{debug.file_name}.py"
+        self.debugger = debug
 
         self.current_command_index = 0  # First command is selected
 
@@ -174,12 +175,6 @@ class DebuggerScreen:
         for pos, line in enumerate(result.split("\n")):
             self.output_window.addstr(pos + 6, 3, ["", "Error - "][error] + line, color)
 
-    def get_current_cmds(self):
-        with open(self.file) as f:
-            readin = f.read()
-        commands = re.findall("def \w+\(.*\):", readin)
-        return [i.split('def ')[1].split('(')[0] for i in commands]
-
     def update_cmds(self):
         """Update available commands"""
 
@@ -190,7 +185,7 @@ class DebuggerScreen:
                 self.commands.pop(i)
         
         # add updated commands
-        for i in self.get_current_cmds():
+        for i in self.debugger.get_functions():
             self.commands[i] = getattr(self.lib, i)
 
         # update window
