@@ -7,15 +7,14 @@ def main(screen: curses.window):
 
     curses.cbreak()
 
-    debugger = DebuggerScreen(
-        screen,
+    debugger = DebuggerScreen(screen)
+    debugger.init(
         {
             "reload": lambda a: a.addstr(6, 10, "reload was pressed"),
             "exit": lambda a: a.addstr(8, 10, "exit was pressed"),
             "function": lambda a: a.addstr(10, 10, "function was pressed"),
             "abc": lambda a: a.addstr(12, 10, "abc was pressed"),
         },
-        10,  # ascii code for enter key => will be used to select commands
         logo,
     )
 

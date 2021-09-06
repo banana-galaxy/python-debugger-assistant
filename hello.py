@@ -1,14 +1,15 @@
-def hello():
-    return "abc"
+def Read_File():
+    with open("debug.txt") as f:
+        return __import__("pprint").pformat(eval(f.read()))
 
 
 def hi():
     return {"hello": 123, "dorime": ["item1", "item2", "cheemsadidas", {"hello!": 1}]}
 
 
-class Hi:
+class Hey:
     pass
 
 
-def weird():
-    return Hi()
+def my_func():
+    return Hey()

@@ -1,29 +1,22 @@
 import curses
 from typing import Callable, Dict
-from copy import deepcopy
-import re
 
 
 class DebuggerScreen:
-    def __init__(
-        self,
-        scrn: curses.window,
-        commands: Dict[str, Callable],
-        logo: str,
-        debugger,
-    ):
+    def __init__(self, screen: curses.window) -> None:
+        self.screen = screen
+
+    def init(self, commands: Dict[str, Callable], logo: str):
         """Initialise screen and windows"""
 
-        self.screen = scrn
         self.commands = commands
         self.logo = logo
-        self.debugger = debugger
 
         self.current_command_index = 0  # First command is selected
 
-        self.commands_window = curses.newwin(curses.LINES, curses.COLS // 2, 0, 0)
+        self.commands_window = curses.newwin(curses.LINES, curses.COLS // 3, 0, 0)
         self.output_window = curses.newwin(
-            curses.LINES, curses.COLS - (curses.COLS // 2), 0, curses.COLS // 2
+            curses.LINES, curses.COLS - (curses.COLS // 3), 0, curses.COLS // 3
         )
 
         self.init_colors()
@@ -67,8 +60,8 @@ class DebuggerScreen:
         """Initialise commands window with title and command lists"""
 
         title = "COMMANDS"
-        padding = (curses.COLS // 4 - len(title) // 2 - 1) * " "
-        new_line = " " + "─" * (curses.COLS // 2 - 4) + " "
+        padding = (curses.COLS // 6 - len(title) // 2 - 1) * " "
+        new_line = " " + "─" * (curses.COLS // 3 - 4) + " "
 
         title = padding + title + padding
 
@@ -82,7 +75,7 @@ class DebuggerScreen:
             self.commands_window.addstr(
                 2 * num + 6,
                 3,
-                "> " + cmd + " " * (curses.COLS // 2 - len("> " + cmd) - 4),
+                "> " + cmd + " " * (curses.COLS // 3 - len("> " + cmd) - 4),
             )
 
     def draw_output_window(self):
@@ -102,8 +95,8 @@ class DebuggerScreen:
         """Initialise output window with title"""
 
         title = "OUTPUT"
-        padding = (curses.COLS // 4 - len(title) // 2 - 1) * " "
-        line = " " + "─" * (curses.COLS // 2 - 4) + " "
+        padding = (curses.COLS // 3 - len(title) // 2 - 1) * " "
+        line = " " + "─" * (2 * curses.COLS // 3 - 3) + " "
 
         title = padding + title + padding
 
@@ -118,7 +111,7 @@ class DebuggerScreen:
 
         for ln, text in enumerate(self.logo.split("\n")):
             text = text.strip()
-            padding = (curses.COLS // 4 - len(text) // 2 - 1) * " "
+            padding = (curses.COLS // 3 - len(text) // 2 - 1) * " "
 
             t1, t2 = text.split("|")
 
@@ -143,7 +136,7 @@ class DebuggerScreen:
         self.commands_window.chgat(
             line,
             3,
-            curses.COLS // 2 - 6,
+            curses.COLS // 3 - 6,
             curses.A_STANDOUT | curses.A_ITALIC | curses.color_pair(1),
         )
 
@@ -165,35 +158,15 @@ class DebuggerScreen:
 
         color = [curses.color_pair(1), curses.color_pair(6)][error]
 
+        self.output_window.clear()
+        self.output_window.border()
+        self.init_output_window()
+
+        if error:
+            self.output_window.addstr(6, 3, "Error -", color)
+
         for pos, line in enumerate(result.split("\n")):
-            self.output_window.addstr(pos + 6, 3, ["", "Error - "][error] + line, color)
-
-    def get_current_cmds(self):
-        self.debugger.reload()
-        return [i for i in dir(self.debugger.module) if "__" not in i]
-
-    def update_cmds(self):
-        """Update available commands"""
-
-        # clean up current displayed command list
-        current_cmds = deepcopy(list(self.commands.keys()))
-        for i in current_cmds:
-            if i not in ["Load Module", "Reload Module", "Exit Debugger"]:
-                self.commands.pop(i)
-
-        # add updated commands
-        for i in self.get_current_cmds():
-            self.commands["Run Function " + i + "()"] = self.debugger.handler_func(
-                getattr(self.debugger.module, i)
-            )
-
-        # Redraw window
-        self.commands_window.refresh()
-        self.commands_window.border()
-        self.draw_commands_window()
-        self.select_command(self.current_command_index)
-
-        self.commands_window.refresh()
+            self.output_window.addstr(pos + 6 + int(error), 3, line, color)
 
     def listen(self):
         """Start listening for inputs"""
@@ -203,12 +176,6 @@ class DebuggerScreen:
 
             if char == 10:
                 self.handle_command()
-                if list(self.commands.keys())[self.current_command_index] in [
-                    "Reload Module",
-                    "Load Module",
-                ]:
-                    self.update_cmds()
-
             elif char == curses.KEY_DOWN:
                 if self.current_command_index < len(self.commands) - 1:
                     self.current_command_index += 1
