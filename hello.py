@@ -1,6 +1,14 @@
-def Read_File():
-    with open("debug.txt") as f:
-        return __import__("pprint").pformat(eval(f.read()))
+def RaiseADivisionError():
+    def inner():
+        def another_inner():
+            def actual_func():
+                return 1 / (1 - 1)
+
+            return actual_func()
+
+        return another_inner()
+
+    return inner()
 
 
 def hi():

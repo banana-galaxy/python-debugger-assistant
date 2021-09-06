@@ -61,13 +61,15 @@ class Debugger:
             result: Tuple
 
             try:
+                result = func(), 0
+            except Exception as e:
                 result = (
-                    "Result - \n"
-                    + pformat(func(), width=curses.COLS // 3, compact=False),
-                    0,
+                    e.__class__.__name__
+                    + " - \n"
+                    + "".join(traceback.format_tb(e.__traceback__))
+                    + e.__format__(""),
+                    1,
                 )
-            except Exception:
-                result = "\n".join(traceback.format_stack()), 1
 
             self.screen.output_window.clear()
             self.screen.output_window.border()
