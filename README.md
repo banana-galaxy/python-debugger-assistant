@@ -1,1 +1,1 @@
-# python-debugger-assistant
+# Python Debugger Assistant
