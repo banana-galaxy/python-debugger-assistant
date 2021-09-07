@@ -9,7 +9,7 @@ from tui import DebuggerScreen
 
 class Debugger:
     def __init__(self, debuggerscreen: DebuggerScreen, logo: str):
-        self.module_name = sys.argv[1]
+        self.module_name = sys.argv[1].split('.')[0]
 
         try:
             self.module = importlib.import_module(self.module_name)
